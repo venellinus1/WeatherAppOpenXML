@@ -10,9 +10,41 @@
 <div class="container my-4">
     <h3 class="text-center mb-4">Weather Data for @weatherData?.Name</h3>
 
+
+    <EditForm Model="@this" OnValidSubmit="ExportToFileClick">
+        <div class="text-center mt-4">
+            <div class="mb-3">
+                <label for="cityInput" class="form-label">City</label>
+                <InputText id="cityInput" class="form-control" @bind-Value="city" />
+                <ValidationMessage For="@(() => city)" />
+            </div>
+
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <button type="button" class="btn btn-primary" @onclick="RefreshTable">Refresh Data</button>
+                <button type="submit" class="btn btn-primary" id="hoverButton" >
+                    Export to xlsx file on Desktop
+                </button>
+
+                @if (!string.IsNullOrEmpty(downloadLink))
+                {
+                    <a href="@downloadLink" class="btn btn-success" download>Download Exported File</a>
+                }
+            </div>
+
+            <div class="w-100 d-block mt-3" style="height: 40px;">
+                @if (isExporting)
+                {
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Exporting...</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </EditForm>
+
     @if (weatherData != null)
     {
-        <table class="table table-striped table-bordered">
+        <table class="table table-striped table-bordered mt-3">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">Property</th>
@@ -75,28 +107,8 @@
     {
         <p class="text-center">Loading weather data...</p>
     }
+    
 
-    <div class="text-center mt-4">
-        <div class="d-flex justify-content-center align-items-center gap-2">
-            <button type="button" class="btn btn-primary" id="hoverButton" @onclick="ExportToFileClick">
-                Export to xlsx file on Desktop
-            </button>
-
-            @if (!string.IsNullOrEmpty(downloadLink))
-            {
-                <a href="@downloadLink" class="btn btn-success" download>Download Exported File</a>
-            }
-        </div>
-
-        @if (isExporting)
-        {
-            <div class="w-100 d-block mt-3">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Exporting...</span>
-                </div>
-            </div>
-        }
-    </div>
 
 </div>
 
@@ -104,6 +116,10 @@
     private WeatherData? weatherData;
     private string downloadLink;
     private bool isExporting = false;
+    private string city = "Pleven";
+
+    private bool IsCityValid => !string.IsNullOrEmpty(city) && city.All(char.IsLetter);
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,6 +128,8 @@
 
     private async Task ExportToFileClick()
     {
+        if (!IsCityValid) return;
+
         isExporting = true;
         if (weatherData != null)
         {
@@ -119,9 +137,19 @@
             await Task.Delay(1000);
             downloadLink = $"/{fileName}";
         }
-        
+
         isExporting = false;
 
         StateHasChanged();
+    }
+
+    private async Task RefreshTable()
+    {
+        if (IsCityValid)
+        {
+            weatherData = await WeatherService.GetWeatherDataAsync(city);
+            downloadLink = "";
+            StateHasChanged();
+        }
     }
 }
