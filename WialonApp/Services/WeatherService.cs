@@ -1,5 +1,7 @@
 ﻿namespace WeatherAppOpenXML.Services;
 using WeatherAppOpenXML.Models;
+
+
 public class WeatherService
 {
     private readonly HttpClient _httpClient;

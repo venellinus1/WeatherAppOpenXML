@@ -7,126 +7,9 @@ using System.IO;
 using System.Xml.Linq;
 using WeatherAppOpenXML.Models;
 
-public class WeatherExportService
-{
-    public void ExportToXml(WeatherData weatherData)
-    {
-        string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "WeatherData.xml");
-
-        var weatherXml = new XElement("WeatherData",
-            new XElement("Location", weatherData.Name),
-            new XElement("Coordinates",
-                new XElement("Latitude", weatherData.Coord.Lat),
-                new XElement("Longitude", weatherData.Coord.Lon)
-            ),
-            new XElement("Weather",
-                new XElement("Condition", weatherData.Weather.FirstOrDefault()?.Main),
-                new XElement("Description", weatherData.Weather.FirstOrDefault()?.Description)
-            ),
-            new XElement("Temperature",
-                new XElement("Current", weatherData.Main.Temp),
-                new XElement("FeelsLike", weatherData.Main.Feels_like),
-                new XElement("Min", weatherData.Main.Temp_min),
-                new XElement("Max", weatherData.Main.Temp_max)
-            ),
-            new XElement("Pressure", weatherData.Main.Pressure),
-            new XElement("Humidity", weatherData.Main.Humidity),
-            new XElement("Wind",
-                new XElement("Speed", weatherData.Wind.Speed),
-                new XElement("Direction", weatherData.Wind.Deg)
-            ),
-            new XElement("Cloudiness", weatherData.Clouds.All),
-            new XElement("Visibility", weatherData.Visibility),
-            new XElement("Country", weatherData.Sys.Country),
-            new XElement("Sunrise", DateTimeOffset.FromUnixTimeSeconds(weatherData.Sys.Sunrise).ToLocalTime().ToString("HH:mm")),
-            new XElement("Sunset", DateTimeOffset.FromUnixTimeSeconds(weatherData.Sys.Sunset).ToLocalTime().ToString("HH:mm"))
-        );
-
-        weatherXml.Save(filePath);
-    }
-
-    public void ExportToExcel(WeatherData weatherData)
-    {
-        if (weatherData == null)
-        {
-            throw new ArgumentNullException(nameof(weatherData));
-        }
-
-        // Define the file path (you can change it to save in a specific directory)
-        string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "WeatherData.xlsx");
-
-        // Create the spreadsheet document
-        using (SpreadsheetDocument document = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook))
-        {
-            // Add a WorkbookPart to the document
-            WorkbookPart workbookPart = document.AddWorkbookPart();
-            workbookPart.Workbook = new Workbook();
-
-            // Add a WorksheetPart to the Workbook
-            WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-            // Add Sheets to the Workbook
-            Sheets sheets = document.WorkbookPart.Workbook.AppendChild(new Sheets());
-            Sheet sheet = new Sheet() { Id = document.WorkbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Weather Data" };
-            sheets.Append(sheet);
-
-            // Get the SheetData (where we will add rows and cells)
-            SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
-
-            // Add Header Row
-            var headerRow = new Row();
-            headerRow.Append(
-                CreateCell("Property"),
-                CreateCell("Value")
-            );
-            sheetData.Append(headerRow);
-
-            // Add Data Rows
-            sheetData.Append(CreateRow("Location", weatherData.Name));
-            sheetData.Append(CreateRow("Latitude", weatherData.Coord.Lat.ToString()));
-            sheetData.Append(CreateRow("Longitude", weatherData.Coord.Lon.ToString()));
-            sheetData.Append(CreateRow("Condition", weatherData.Weather.FirstOrDefault()?.Main));
-            sheetData.Append(CreateRow("Description", weatherData.Weather.FirstOrDefault()?.Description));
-            sheetData.Append(CreateRow("Temperature (°C)", weatherData.Main.Temp.ToString()));
-            sheetData.Append(CreateRow("Feels Like (°C)", weatherData.Main.Feels_like.ToString()));
-            sheetData.Append(CreateRow("Temperature Min (°C)", weatherData.Main.Temp_min.ToString()));
-            sheetData.Append(CreateRow("Temperature Max (°C)", weatherData.Main.Temp_max.ToString()));
-            sheetData.Append(CreateRow("Pressure (hPa)", weatherData.Main.Pressure.ToString()));
-            sheetData.Append(CreateRow("Humidity (%)", weatherData.Main.Humidity.ToString()));
-            sheetData.Append(CreateRow("Wind Speed (m/s)", weatherData.Wind.Speed.ToString()));
-            sheetData.Append(CreateRow("Wind Direction (°)", weatherData.Wind.Deg.ToString()));
-            sheetData.Append(CreateRow("Cloudiness (%)", weatherData.Clouds.All.ToString()));
-            sheetData.Append(CreateRow("Visibility (m)", weatherData.Visibility.ToString()));
-            sheetData.Append(CreateRow("Country", weatherData.Sys.Country));
-            sheetData.Append(CreateRow("Sunrise", DateTimeOffset.FromUnixTimeSeconds(weatherData.Sys.Sunrise).ToLocalTime().ToString("HH:mm")));
-            sheetData.Append(CreateRow("Sunset", DateTimeOffset.FromUnixTimeSeconds(weatherData.Sys.Sunset).ToLocalTime().ToString("HH:mm")));
-
-            workbookPart.Workbook.Save();
-        }
-    }
-
-    // Helper method to create cells
-    private Cell CreateCell(string text)
-    {
-        return new Cell
-        {
-            DataType = CellValues.String,
-            CellValue = new CellValue(text)
-        };
-    }
-
-    // Helper method to create rows
-    private Row CreateRow(string propertyName, string value)
-    {
-        var row = new Row();
-        row.Append(
-            CreateCell(propertyName),
-            CreateCell(value)
-        );
-        return row;
-    }
-
+public class WeatherExportService : IWeatherExportService
+{ 
+   
     public async Task<string> ExportToExcelAsync(WeatherData weatherData)
     {
         if (weatherData == null)
@@ -265,6 +148,5 @@ public class WeatherExportService
         return row;
     }
 
-    
 }
 

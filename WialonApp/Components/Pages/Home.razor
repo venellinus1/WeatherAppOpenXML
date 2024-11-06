@@ -15,19 +15,19 @@
         <div class="text-center mt-4">
             <div class="mb-3">
                 <label for="cityInput" class="form-label">City</label>
-                <InputText id="cityInput" class="form-control" @bind-Value="city" />
+                <InputText id="cityInput" class="form-control" @bind-Value="city"  />
                 <ValidationMessage For="@(() => city)" />
             </div>
 
             <div class="d-flex justify-content-center align-items-center gap-2">
                 <button type="button" class="btn btn-primary" @onclick="RefreshTable">Refresh Data</button>
-                <button type="submit" class="btn btn-primary" id="hoverButton" >
-                    Export to xlsx file on Desktop
+                <button type="submit" class="btn btn-primary" id="hoverButton" disabled="@(!IsCityValid)">
+                    Export to xlsx file
                 </button>
 
                 @if (!string.IsNullOrEmpty(downloadLink))
                 {
-                    <a href="@downloadLink" class="btn btn-success" download>Download Exported File</a>
+                    <a href="@downloadLink" class="btn btn-success" download>Download exported file</a>
                 }
             </div>
 
